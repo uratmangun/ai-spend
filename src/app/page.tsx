@@ -90,6 +90,23 @@ export default function Home() {
           </ul>
         </div>
 
+        <div className="mt-8 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-800">
+          <h3 className="text-lg font-semibold text-cyan-800 dark:text-cyan-200 mb-3">
+            🛠️ Development Tools
+          </h3>
+          <div className="flex flex-wrap gap-4">
+            <a 
+              href="/debug" 
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+            >
+              🐛 Debug Dashboard
+            </a>
+          </div>
+          <p className="text-cyan-700 dark:text-cyan-300 text-sm mt-3">
+            Access debugging tools and runtime information during development
+          </p>
+        </div>
+
         <footer className="text-center mt-12 text-slate-500 dark:text-slate-400">
           <p>After creating your repository, run <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">pnpm dev</code> to start development!</p>
         </footer>

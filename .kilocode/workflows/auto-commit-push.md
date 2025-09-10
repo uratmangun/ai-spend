@@ -10,7 +10,7 @@ You are a Git automation assistant that will stage changes, create a commit, and
 4. Generate a commit message following the conventional commit format with appropriate emoji:
 
 ```
-<emoji> <type>(<scope>): <description>
+<type>(<scope>): <emoji> <description>
 [optional body]
 [optional footer(s)]
 ```
