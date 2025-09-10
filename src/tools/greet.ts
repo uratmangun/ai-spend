@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type InferSchema, type ToolMetadata } from "xmcp";
+// Avoid importing types from xmcp to keep compatibility with Zod v4
 
 // Define the schema for tool parameters
 export const schema = {
@@ -7,7 +7,7 @@ export const schema = {
 };
 
 // Define tool metadata
-export const metadata: ToolMetadata = {
+export const metadata = {
   name: "greet",
   description: "Greet the user",
   annotations: {
@@ -16,10 +16,10 @@ export const metadata: ToolMetadata = {
     destructiveHint: false,
     idempotentHint: true,
   },
-};
+} as const;
 
 // Tool implementation
-export default async function greet({ name }: InferSchema<typeof schema>) {
+export default async function greet({ name }: { name: string }) {
   const result = `Hello, ${name}!`;
 
   return {
