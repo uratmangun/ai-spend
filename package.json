@@ -6,8 +6,8 @@
     "adapter"
   ],
   "scripts": {
-    "dev": "xmcp dev & next dev --turbopack",
-    "build": "xmcp build && next build",
+    "dev": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp dev & next dev --turbopack",
+    "build": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp build && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -26,7 +26,7 @@
     "react-dom": "^19.0.0",
     "tsx": "^4.20.5",
     "viem": "^2.37.5",
-    "xmcp": "^0.2.0",
+    "xmcp": "^0.2.1",
     "zod": "4.1.5"
   },
   "devDependencies": {
@@ -40,5 +40,20 @@
     "swc-loader": "^0.2.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "xmcp@*": {
+        "dependencies": {
+          "zod": "^3.24.4"
+        },
+        "peerDependencies": {
+          "zod": "^3.22.4"
+        }
+      }
+    },
+    "overrides": {
+      "xmcp>zod": "^3.24.4"
+    }
   }
 }
