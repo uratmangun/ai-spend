@@ -1,10 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SignInWithBaseButton } from '../../components/SignInWithBase';
+import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit';
+import { useAccount, useChainId, useSwitchChain } from 'wagmi';
+import { base, baseSepolia } from 'wagmi/chains';
 
 export default function DebugPage() {
   const [userAddress, setUserAddress] = useState<string>('');
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  const { openConnectModal } = useConnectModal();
+
+  // When user clicks switch while disconnected, remember target and switch after connect
+  const [pendingTargetChainId, setPendingTargetChainId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isConnected && pendingTargetChainId) {
+      try {
+        switchChain({ chainId: pendingTargetChainId });
+      } catch (err) {
+        console.error('Auto-switch after connect failed:', err);
+      } finally {
+        setPendingTargetChainId(null);
+      }
+    }
+  }, [isConnected, pendingTargetChainId, switchChain]);
+
+  const chainNames: Record<number, string> = {
+    [baseSepolia.id]: baseSepolia.name,
+    [base.id]: base.name,
+  };
+  const chainName = isConnected
+    ? (chainNames[chainId] ?? (chainId ? `Chain ID ${chainId}` : 'Unknown'))
+    : 'Not connected';
+
+  const handleSwitchToBase = () => {
+    if (!isConnected) {
+      setPendingTargetChainId(base.id);
+      openConnectModal?.();
+      return;
+    }
+    try {
+      switchChain({ chainId: base.id });
+    } catch (err) {
+      console.error('Failed to switch to Base:', err);
+    }
+  };
+
+  const handleSwitchToBaseSepolia = () => {
+    if (!isConnected) {
+      setPendingTargetChainId(baseSepolia.id);
+      openConnectModal?.();
+      return;
+    }
+    try {
+      switchChain({ chainId: baseSepolia.id });
+    } catch (err) {
+      console.error('Failed to switch to Base Sepolia:', err);
+    }
+  };
 
   const handleSignIn = (address: string) => {
     setUserAddress(address);
@@ -26,6 +82,28 @@ export default function DebugPage() {
                 onSignIn={handleSignIn} 
                 colorScheme="dark"
               />
+              <div>
+                <ConnectButton label="Connect Wallet (RainbowKit)" />
+                <p className="mt-2 text-sm text-slate-300">
+                  Network: <span className="font-medium">{chainName}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSwitchToBase}
+                  disabled={!isConnected || chainId === base.id || isSwitching}
+                  className="mt-2 inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 text-white px-4 py-2 rounded transition-colors text-sm"
+                >
+                  {isSwitching ? 'Switching…' : 'Switch to Base'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSwitchToBaseSepolia}
+                  disabled={!isConnected || chainId === baseSepolia.id || isSwitching}
+                  className="mt-2 ml-2 inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 text-white px-4 py-2 rounded transition-colors text-sm"
+                >
+                  {isSwitching ? 'Switching…' : 'Switch to Base Sepolia'}
+                </button>
+              </div>
               {userAddress && (
                 <div className="mt-4 p-4 bg-green-900/20 border border-green-700 rounded">
                   <p className="text-green-400">

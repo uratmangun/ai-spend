@@ -6,7 +6,8 @@
     "adapter"
   ],
   "scripts": {
-    "dev": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp dev & next dev --turbopack",
+    "dev": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp dev & next dev",
+    "dev:turbo": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp dev & next dev --turbo",
     "build": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp build && next build",
     "start": "next start",
     "lint": "next lint"
@@ -16,6 +17,8 @@
     "@farcaster/jfs": "^0.0.6",
     "@farcaster/miniapp-sdk": "^0.1.10",
     "@google/genai": "^1.17.0",
+    "@rainbow-me/rainbowkit": "^2.2.8",
+    "@tanstack/react-query": "^5.87.4",
     "ai": "^5.0.39",
     "dotenv": "^17.2.2",
     "ethers": "^6.15.0",
@@ -26,6 +29,7 @@
     "react-dom": "^19.0.0",
     "tsx": "^4.20.5",
     "viem": "^2.37.5",
+    "wagmi": "^2.16.9",
     "xmcp": "^0.2.1",
     "zod": "4.1.5"
   },

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "Debug Dashboard | Farcaster Mini App",
@@ -17,8 +18,8 @@ export default function DebugLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <Providers>
       {children}
-    </>
+    </Providers>
   );
 }
