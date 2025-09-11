@@ -1,115 +1,115 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk'
+import { sdk } from '@farcaster/miniapp-sdk';
 
 export default function Home() {
-  const [copied, setCopied] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(true);
+  const [userAddress, setUserAddress] = useState<string>('');
 
   useEffect(() => {
     const initializeSdk = async () => {
-      await sdk.actions.ready();
+      try {
+        await sdk.actions.ready();
+        setIsReady(true);
+
+        // Get user context if available
+        const context = await sdk.context;
+        if (context?.user?.fid) {
+          console.log('Farcaster user context:', context);
+        }
+      } catch (error) {
+        console.error('Failed to initialize Farcaster SDK:', error);
+      }
     };
     initializeSdk();
   }, []);
 
-  const copyToClipboard = async (text: string, id: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
+  const connectWallet = async () => {
+    try {
+      // This will be implemented with Base Account SDK for spend permissions
+      console.log('Connecting wallet for spend permissions...');
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
   };
 
-  const commands = [
-    {
-      id: 'create',
-      title: '1. Create a new repository from this template',
-      command: 'gh repo create your-new-repo --template uratmangun/nextjs-mcp --public --clone',
-      description: 'Creates a new public repository using this as a template and clones it locally'
-    },
-    {
-      id: 'clone',
-      title: '2. Or clone an existing repository created from this template',
-      command: 'gh repo clone username/your-repo-name',
-      description: 'Clones an existing repository to your local machine'
-    },
-    {
-      id: 'make-public',
-      title: '3. Make an existing repository public (if needed)',
-      command: 'gh repo edit --visibility public',
-      description: 'Changes repository visibility to public (run inside the repo directory)'
+  const requestSpendPermission = async () => {
+    try {
+      // This will be implemented to request spend permissions from Base Account SDK
+      console.log('Requesting spend permission...');
+    } catch (error) {
+      console.error('Failed to request spend permission:', error);
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <header className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-            Next.js MCP Template
+            AI Spend Permissions
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-300">
-            Use this to create your next Next.js MCP apps
+          <p className="text-lg text-slate-600 dark:text-slate-300 mb-4">
+            Grant AI agents access to your funds securely using Base Account SDK
           </p>
+          {!isReady && (
+            <p className="text-sm text-yellow-600 dark:text-yellow-400">
+              Initializing Farcaster Mini App...
+            </p>
+          )}
         </header>
 
         <div className="space-y-6">
-          {commands.map((cmd) => (
-            <div
-              key={cmd.id}
-              className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700"
+          {/* Connection Status */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">
+              🔗 Wallet Connection
+            </h3>
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
+              Connect your wallet to grant spend permissions to AI agents
+            </p>
+            <button
+              onClick={connectWallet}
+              disabled={!isReady}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg transition-colors font-medium"
             >
-              <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">
-                {cmd.title}
-              </h3>
-              <p className="text-slate-600 dark:text-slate-300 mb-4">
-                {cmd.description}
-              </p>
-              <div className="relative">
-                <pre className="bg-slate-900 dark:bg-slate-950 text-green-400 p-4 rounded-lg overflow-x-auto font-mono text-sm">
-                  <code>{cmd.command}</code>
-                </pre>
-                <button
-                  onClick={() => copyToClipboard(cmd.command, cmd.id)}
-                  className="absolute top-2 right-2 bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                >
-                  {copied === cmd.id ? '✓ Copied!' : 'Copy'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-          <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-3">
-            📋 Prerequisites
-          </h3>
-          <ul className="space-y-2 text-blue-700 dark:text-blue-300">
-            <li>• Install GitHub CLI: <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">brew install gh</code> or <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">winget install GitHub.cli</code></li>
-            <li>• Authenticate: <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">gh auth login</code></li>
-            <li>• Replace <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">your-new-repo</code> and <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">username/your-repo-name</code> with actual names</li>
-          </ul>
-        </div>
-
-        <div className="mt-8 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-800">
-          <h3 className="text-lg font-semibold text-cyan-800 dark:text-cyan-200 mb-3">
-            🛠️ Development Tools
-          </h3>
-          <div className="flex flex-wrap gap-4">
-            <a 
-              href="/debug" 
-              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
-            >
-              🐛 Debug Dashboard
-            </a>
+              Connect Wallet
+            </button>
           </div>
-          <p className="text-cyan-700 dark:text-cyan-300 text-sm mt-3">
-            Access debugging tools and runtime information during development
-          </p>
-        </div>
 
-        <footer className="text-center mt-12 text-slate-500 dark:text-slate-400">
-          <p>After creating your repository, run <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">pnpm dev</code> to start development!</p>
-        </footer>
+          {/* Spend Permissions */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">
+              💰 Grant Spend Permission
+            </h3>
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
+              Allow AI agents to spend from your account for automated transactions
+            </p>
+            <button
+              onClick={requestSpendPermission}
+              disabled={!isReady || !userAddress}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+            >
+              Grant Permission
+            </button>
+          </div>
+
+          {/* Debug Info */}
+          <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-800">
+            <h3 className="text-lg font-semibold text-cyan-800 dark:text-cyan-200 mb-3">
+              🐛 Debug Info
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p className="text-cyan-700 dark:text-cyan-300">
+                <strong>Farcaster Ready:</strong> {isReady ? '✅' : '⏳'}
+              </p>
+              <p className="text-cyan-700 dark:text-cyan-300">
+                <strong>Wallet Address:</strong> {userAddress || 'Not connected'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
