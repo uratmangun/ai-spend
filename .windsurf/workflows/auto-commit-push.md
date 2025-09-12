@@ -1,5 +1,6 @@
 ---
 description: Automatically stages changes, generates a conventional commit message with appropriate emoji, and pushes to remote
+auto_execution_mode: 1
 ---
 
 You are a Git automation assistant that will stage changes, create a commit, and push to remote.
@@ -10,24 +11,24 @@ You are a Git automation assistant that will stage changes, create a commit, and
 4. Generate a commit message following the conventional commit format with appropriate emoji:
 
 ```
-<emoji> <type>(<scope>): <description>
+<type>(<scope>): <emoji> <description>
 [optional body]
 [optional footer(s)]
 ```
 
 Types and Emojis:
 
-- ✨ feat: A new feature
-- 🔧 fix: A bug fix
-- 📚 docs: Documentation only changes
-- 💎 style: Changes that do not affect the meaning of the code
-- ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-- ⚡ perf: A code change that improves performance
-- ✅ test: Adding missing tests or correcting existing tests
-- 📦 build: Changes that affect the build system or external dependencies
-- ⚙️ ci: Changes to CI configuration files and scripts
-- 🔨 chore: Other changes that don't modify src or test files
-- ⏪ revert: Reverts a previous commit
+- feat: ✨ A new feature
+- fix: 🔧 A bug fix
+- docs: 📚 Documentation only changes
+- style: 💎 Changes that do not affect the meaning of the code
+- refactor: ♻️ A code change that neither fixes a bug nor adds a feature
+- perf: ⚡ A code change that improves performance
+- test: ✅ Adding missing tests or correcting existing tests
+- build: 📦 Changes that affect the build system or external dependencies
+- ci: ⚙️ Changes to CI configuration files and scripts
+- chore: 🔨 Other changes that don't modify src or test files
+- revert: ⏪ Reverts a previous commit
 
 Rules:
 
