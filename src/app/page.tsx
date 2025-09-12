@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
@@ -78,7 +78,16 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>('');
-  const [model, setModel] = useState<string>('openai/gpt-5');
+  const [model, setModel] = useState<string>('stealth/sonoma-sky-alpha');
+  // Store streaming tool events per chat so we can render them even if parts are not preserved.
+  const toolEventsRef = useRef<Record<string, Record<string, { toolName?: string; input?: any; output?: any; error?: any }>>>({});
+  const [toolEventsTick, setToolEventsTick] = useState(0);
+  // Keep a ref of the latest chat id to avoid stale closures inside onData
+  const selectedChatIdRef = useRef<string>('');
+  useEffect(() => {
+    selectedChatIdRef.current = selectedChatId;
+    console.log('selectedChatIdRef updated to:', selectedChatId);
+  }, [selectedChatId]);
 
   // Initialize AI chat hook for streaming; tie to selected chat and current model
   const initialUiMessages = useMemo(() => {
@@ -92,9 +101,37 @@ export default function Home() {
 
   const { messages: uiMessages, sendMessage, isLoading, stop } = useChat({
     id: selectedChatId || 'default',
-    api: '/api/chat',
-    body: { model },
-    initialMessages: initialUiMessages as any,
+    onData: (chunk: any) => {
+      // Capture tool input/output events as they stream in
+      try {
+        console.log('onData chunk:', chunk);
+        if (!chunk || typeof chunk !== 'object') return;
+        const currentChatId = selectedChatIdRef.current;
+        if (!currentChatId) {
+          console.warn('No chat selected, skipping tool event');
+          return;
+        }
+        const byChat = toolEventsRef.current;
+        byChat[currentChatId] = byChat[currentChatId] ?? {};
+        const store = byChat[currentChatId];
+        const t = chunk.type;
+        // Also handle tool-input-start, tool-input-delta, and custom tool types
+        if (t === 'tool-input-start' || t === 'tool-input-delta' || t === 'tool-input-available' || t === 'tool-output-available' || t === 'tool-input-error' || t === 'tool-output-error' || t === 'tool-call' || t === 'tool-result' || t.startsWith('tool-')) {
+          const id = String(chunk.toolCallId ?? 'unknown');
+          store[id] = store[id] ?? {};
+          if (chunk.toolName) store[id].toolName = chunk.toolName;
+          if (t === 'tool-input-available' || t === 'tool-call' || t.startsWith('tool-')) store[id].input = chunk.input ?? store[id].input;
+          if (t === 'tool-output-available' || t === 'tool-result' || t.startsWith('tool-')) store[id].output = chunk.output ?? store[id].output;
+          if (t === 'tool-input-error' || t === 'tool-output-error') store[id].error = chunk.errorText ?? store[id].error;
+          console.log('Tool event stored:', currentChatId, id, store[id]);
+          // trigger a re-render so our effect recomputes content with latest tool details
+          setToolEventsTick((n) => (n + 1));
+        }
+        // Optionally clear on finish of a step; we keep events so they remain visible in chat
+      } catch (err) {
+        console.error('Error in onData:', err);
+      }
+    },
   });
 
   useEffect(() => {
@@ -337,7 +374,8 @@ export default function Home() {
     const text = chatInput.trim();
     if (!text || !selectedChatId) return;
     try {
-      await sendMessage({ text });
+      // Include the currently selected model in the request payload for this submission.
+      await sendMessage({ text }, { body: { model } });
     } catch (err) {
       console.error('sendMessage failed', err);
     } finally {
@@ -347,25 +385,203 @@ export default function Home() {
 
   // Sync streamed UI messages into our local chat store for display/persistence
   useEffect(() => {
+    console.log('Sync effect running. selectedChatId:', selectedChatId);
+    console.log('uiMessages:', JSON.stringify(uiMessages, null, 2));
+    console.log('toolEventsRef.current:', toolEventsRef.current);
     if (!selectedChatId) return;
-    if (!uiMessages || uiMessages.length === 0) return;
-    const converted: ChatMessage[] = (uiMessages as any[]).map((m: any, idx: number) => {
-      const parts: any[] = m.parts ?? (m.content ? [{ type: 'text', text: m.content }] : []);
-      let content = '';
-      for (const p of parts) {
-        if (p?.type === 'text' && typeof p.text === 'string') content += p.text;
-        else if (p) content += `\n[${p.type}] ${JSON.stringify(p)}\n`;
+    
+    // Always include tool events even if uiMessages is empty (while streaming)
+    const messagesWithTools = uiMessages || [];
+    const converted: ChatMessage[] = messagesWithTools.length > 0 ? (messagesWithTools as any[]).map((m: any, idx: number) => {
+      console.log('Processing message:', m);
+      // Normalize parts: prefer UI parts, else fall back to model content array, else string content
+      let parts: any[] = [];
+      if (Array.isArray(m?.parts)) {
+        parts = m.parts as any[];
+      } else if (Array.isArray(m?.content)) {
+        parts = m.content as any[];
+      } else if (typeof m?.content === 'string') {
+        parts = [{ type: 'text', text: m.content }];
       }
+      console.log('Message parts:', parts);
+      // Gather plain text parts
+      const textContent = parts
+        .filter((p) => p?.type === 'text' && typeof p.text === 'string')
+        .map((p) => p.text as string)
+        .join('')
+        .trim();
+
+      // Gather tool call/result details for display
+      const toolMap: Record<string, { toolName?: string; input?: any; output?: any; error?: any }> = {};
+      for (const p of parts) {
+        if (p?.type === 'tool-call') {
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].toolName = p.toolName ?? toolMap[id].toolName;
+          toolMap[id].input = p.input ?? toolMap[id].input;
+        } else if (p?.type === 'tool-result') {
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].toolName = p.toolName ?? toolMap[id].toolName;
+          toolMap[id].output = p.output ?? toolMap[id].output;
+        } else if (p?.type === 'tool-input-available') {
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].toolName = p.toolName ?? toolMap[id].toolName;
+          toolMap[id].input = p.input ?? toolMap[id].input;
+        } else if (p?.type === 'tool-output-available') {
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].output = p.output ?? toolMap[id].output;
+        } else if (p?.type === 'tool-input-error') {
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].toolName = p.toolName ?? toolMap[id].toolName;
+          toolMap[id].input = p.input ?? toolMap[id].input;
+          toolMap[id].error = p.errorText ?? toolMap[id].error;
+        } else if (p?.type === 'tool-output-error') {
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].error = p.errorText ?? toolMap[id].error;
+        } else if (p?.type?.startsWith('tool-')) {
+          // Handle custom tool types like 'tool-weather'
+          const id = String(p.toolCallId ?? 'unknown');
+          toolMap[id] = toolMap[id] ?? {};
+          toolMap[id].toolName = p.type.replace('tool-', '') ?? toolMap[id].toolName;
+          if (p.input !== undefined) toolMap[id].input = p.input ?? toolMap[id].input;
+          if (p.output !== undefined) toolMap[id].output = p.output ?? toolMap[id].output;
+          if (p.errorText !== undefined) toolMap[id].error = p.errorText ?? toolMap[id].error;
+        }
+      }
+
+      // Merge in any captured streaming tool events for this chat
+      const captured = toolEventsRef.current[selectedChatId] ?? {};
+      console.log('Captured tool events for chat', selectedChatId, ':', captured);
+      for (const [id, info] of Object.entries(captured)) {
+        toolMap[id] = toolMap[id] ?? {};
+        if (info.toolName !== undefined) toolMap[id].toolName = toolMap[id].toolName ?? info.toolName;
+        if (info.input !== undefined) toolMap[id].input = toolMap[id].input ?? info.input;
+        if (info.output !== undefined) toolMap[id].output = toolMap[id].output ?? info.output;
+        if (info.error !== undefined) toolMap[id].error = toolMap[id].error ?? info.error;
+      }
+      console.log('Final toolMap:', toolMap);
+
+      const toolSummaries: string[] = [];
+      for (const [callId, info] of Object.entries(toolMap)) {
+        const lines: string[] = [];
+        lines.push(`🧰 Tool ${info.toolName ?? callId}`);
+        if (info.input !== undefined) {
+          try {
+            lines.push(`input: ${typeof info.input === 'string' ? info.input : JSON.stringify(info.input)}`);
+          } catch {
+            lines.push('input: [unserializable]');
+          }
+        }
+        if (info.output !== undefined) {
+          try {
+            lines.push(`output: ${typeof info.output === 'string' ? info.output : JSON.stringify(info.output)}`);
+          } catch {
+            lines.push('output: [unserializable]');
+          }
+        }
+        if (info.error !== undefined) {
+          try {
+            lines.push(`error: ${typeof info.error === 'string' ? info.error : JSON.stringify(info.error)}`);
+          } catch {
+            lines.push('error: [unserializable]');
+          }
+        }
+        toolSummaries.push(lines.join('\n'));
+      }
+
+      const content = [textContent, ...toolSummaries].filter(Boolean).join('\n\n').trim();
       const role: 'user' | 'assistant' = m.role === 'user' ? 'user' : 'assistant';
-      return { id: String(m.id ?? `ui-${idx}`), role, content: content.trim() } as ChatMessage;
-    });
+      console.log('Final message content for', role, ':', content);
+      return { id: String(m.id ?? `ui-${idx}`), role, content: content || '(processing...)' } as ChatMessage;
+    }) : [];
+
+    // Fallback: if there is no assistant content yet but we have captured tool events,
+    // add a synthetic assistant message with the tool summaries so the UI shows progress/results.
+    const hasAssistantContent = converted.some((cm) => cm.role === 'assistant' && cm.content.trim().length > 0 && cm.content !== '(processing...)');
+    console.log('Has assistant content:', hasAssistantContent, 'Converted messages:', converted);
+    if (!hasAssistantContent) {
+      const captured = toolEventsRef.current[selectedChatId] ?? {};
+      const toolSummaries: string[] = [];
+      for (const [callId, info] of Object.entries(captured)) {
+        const lines: string[] = [];
+        lines.push(`🧰 Tool ${info.toolName ?? callId}`);
+        if (info.input !== undefined) {
+          try {
+            lines.push(`input: ${typeof info.input === 'string' ? info.input : JSON.stringify(info.input)}`);
+          } catch {
+            lines.push('input: [unserializable]');
+          }
+        }
+        if (info.output !== undefined) {
+          try {
+            lines.push(`output: ${typeof info.output === 'string' ? info.output : JSON.stringify(info.output)}`);
+          } catch {
+            lines.push('output: [unserializable]');
+          }
+        }
+        if (info.error !== undefined) {
+          try {
+            lines.push(`error: ${typeof info.error === 'string' ? info.error : JSON.stringify(info.error)}`);
+          } catch {
+            lines.push('error: [unserializable]');
+          }
+        }
+        toolSummaries.push(lines.join('\n'));
+      }
+      const summaryText = toolSummaries.join('\n\n').trim();
+      console.log('Fallback tool summary text:', summaryText);
+      if (summaryText) {
+        converted.push({
+          id: `tool-summary-${Date.now()}`,
+          role: 'assistant',
+          content: summaryText,
+        });
+      }
+    }
+    
+    // ALWAYS show tool events if they exist, even if no messages yet
+    if (converted.length === 0) {
+      const captured = toolEventsRef.current[selectedChatId] ?? {};
+      if (Object.keys(captured).length > 0) {
+        const toolSummaries: string[] = [];
+        for (const [callId, info] of Object.entries(captured)) {
+          const lines: string[] = [];
+          lines.push(`🧰 Tool ${info.toolName ?? callId}`);
+          if (info.input !== undefined) {
+            lines.push(`input: ${typeof info.input === 'string' ? info.input : JSON.stringify(info.input)}`);
+          }
+          if (info.output !== undefined) {
+            lines.push(`output: ${typeof info.output === 'string' ? info.output : JSON.stringify(info.output)}`);
+          }
+          if (info.error !== undefined) {
+            lines.push(`error: ${typeof info.error === 'string' ? info.error : JSON.stringify(info.error)}`);
+          }
+          toolSummaries.push(lines.join('\n'));
+        }
+        const summaryText = toolSummaries.join('\n\n').trim();
+        if (summaryText) {
+          converted.push({
+            id: `tool-only-${Date.now()}`,
+            role: 'assistant',
+            content: summaryText,
+          });
+        }
+      }
+    }
+    
+    console.log('Final converted messages:', converted);
     setChats((prev) => {
       const chat = prev[selectedChatId];
       if (!chat) return prev;
       const updated: Chat = { ...chat, messages: converted, updatedAt: Date.now() };
       return { ...prev, [selectedChatId]: updated };
     });
-  }, [uiMessages, selectedChatId]);
+  }, [uiMessages, selectedChatId, toolEventsTick]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-8">
@@ -518,7 +734,7 @@ export default function Home() {
                 {(chats[selectedChatId]?.messages ?? []).map((m) => (
                   <div
                     key={m.id}
-                    className={`max-w-[85%] px-3 py-2 rounded-md text-sm ${m.role === 'user' ? 'ml-auto bg-cyan-600 text-white' : 'mr-auto bg-slate-700 text-slate-100'}`}
+                    className={`max-w-[85%] px-3 py-2 rounded-md text-sm whitespace-pre-wrap ${m.role === 'user' ? 'ml-auto bg-cyan-600 text-white' : 'mr-auto bg-slate-700 text-slate-100'}`}
                   >
                     {m.content}
                   </div>
