@@ -15,7 +15,13 @@ function isFromXmcp(parent) {
   if (!parent || !parent.filename) return false;
   const f = parent.filename.replace(/\\/g, '/');
   // Match pnpm and normal node_modules layouts
-  return f.includes('/node_modules/xmcp/') || f.includes('/node_modules/.pnpm/xmcp@');
+  // Also include local generated adapter and tools paths so schemas use Zod v3
+  return (
+    f.includes('/node_modules/xmcp/') ||
+    f.includes('/node_modules/.pnpm/xmcp@') ||
+    f.includes('/.xmcp/') ||
+    f.includes('/src/tools/')
+  );
 }
 
 // Locate a Zod v3 installation inside pnpm store

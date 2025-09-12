@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import * as tool0 from "../src/tools/check_balance.ts";
+import * as tool1 from "../src/tools/greet.ts";
 
 /** 
  * Runtime-accessible tools function that works from any context.
@@ -13,6 +14,11 @@ export async function getTools() {
           path: "src/tools/check_balance.ts",
           name: "check_balance",
           module: tool0
+        },
+  {
+          path: "src/tools/greet.ts",
+          name: "greet",
+          module: tool1
         }
   ];
 

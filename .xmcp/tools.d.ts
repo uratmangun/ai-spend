@@ -24,7 +24,7 @@ export interface ToolRegistryItem {
   execute: (args: any) => Promise<any>;
 }
 
-export type ToolNames = "check_balance";
+export type ToolNames = "check_balance" | "greet";
 
 export type ToolRegistry = {
   [k in ToolNames]: ToolRegistryItem;

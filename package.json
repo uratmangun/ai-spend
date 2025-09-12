@@ -6,9 +6,9 @@
     "adapter"
   ],
   "scripts": {
-    "dev": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp dev & next dev",
-    "dev:turbo": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp dev & next dev --turbo",
-    "build": "NODE_OPTIONS=\"-r ./scripts/force-zod3.cjs\" xmcp build && next build",
+    "dev": "NODE_OPTIONS=\"--require ./scripts/force-zod3.cjs\" xmcp dev & NODE_OPTIONS=\"--require ./scripts/force-zod3.cjs\" next dev",
+    "dev:turbo": "NODE_OPTIONS=\"--require ./scripts/force-zod3.cjs\" xmcp dev & NODE_OPTIONS=\"--require ./scripts/force-zod3.cjs\" next dev --turbo",
+    "build": "NODE_OPTIONS=\"--require ./scripts/force-zod3.cjs\" xmcp build && NODE_OPTIONS=\"--require ./scripts/force-zod3.cjs\" next build",
     "start": "next start",
     "lint": "next lint"
   },
