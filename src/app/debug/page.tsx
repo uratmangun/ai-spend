@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SignInWithBaseButton } from '../../components/SignInWithBase';
 import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
 
 export default function DebugPage() {
-  const [userAddress, setUserAddress] = useState<string>('');
   const { isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
@@ -62,11 +60,6 @@ export default function DebugPage() {
     }
   };
 
-  const handleSignIn = (address: string) => {
-    setUserAddress(address);
-    console.log('User signed in with address:', address);
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 text-white p-8">
       <div className="max-w-6xl mx-auto">
@@ -78,12 +71,8 @@ export default function DebugPage() {
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
             <h2 className="text-xl font-semibold text-cyan-400 mb-4">Base Authentication Test</h2>
             <div className="space-y-4">
-              <SignInWithBaseButton 
-                onSignIn={handleSignIn} 
-                colorScheme="dark"
-              />
               <div>
-                <ConnectButton label="Connect Wallet (RainbowKit)" />
+                <ConnectButton label="Connect Wallet" />
                 <p className="mt-2 text-sm text-slate-300">
                   Network: <span className="font-medium">{chainName}</span>
                 </p>
@@ -104,13 +93,6 @@ export default function DebugPage() {
                   {isSwitching ? 'Switching…' : 'Switch to Base Sepolia'}
                 </button>
               </div>
-              {userAddress && (
-                <div className="mt-4 p-4 bg-green-900/20 border border-green-700 rounded">
-                  <p className="text-green-400">
-                    ✅ Signed in as: <code className="bg-slate-700 px-2 py-1 rounded text-xs">{userAddress}</code>
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>
