@@ -8,16 +8,29 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const url = new URL(req.url);
     const queryModel = url.searchParams.get('model') ?? undefined;
-    const { messages, model: bodyModel }: { messages: UIMessage[]; model?: string } = await req.json();
+    const body: any = await req.json().catch(() => ({} as any));
+    const messages: UIMessage[] = Array.isArray(body?.messages) ? (body.messages as UIMessage[]) : [];
+    const bodyModel: string | undefined =
+      typeof body?.model === 'string'
+        ? (body.model as string)
+        : typeof body?.data?.model === 'string'
+        ? (body.data.model as string)
+        : undefined;
 
-    if (!Array.isArray(messages)) {
+    if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Missing messages' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const chosenModel = (queryModel ?? bodyModel).trim();
+    const chosenModel = ((queryModel ?? bodyModel ?? '') as string).toString().trim();
+    if (!chosenModel) {
+      return new Response(
+        JSON.stringify({ error: 'Missing model' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     const result = streamText({
       model: chosenModel,
