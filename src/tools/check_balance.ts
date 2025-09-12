@@ -8,10 +8,10 @@ export const schema = {
 
 // Define tool metadata
 export const metadata = {
-  name: "greet",
-  description: "Greet the user",
+  name: "check_balance",
+  description: "check ethereum address balance via coinbase api",
   annotations: {
-    title: "Greet the user",
+    title: "check ethereum address balance via coinbase api",
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
@@ -19,7 +19,7 @@ export const metadata = {
 } as const;
 
 // Tool implementation
-export default async function greet({ name }: { name: string }) {
+export default async function check_balance({ name }: { name: string }) {
   const result = `Hello, ${name}!`;
 
   return {
