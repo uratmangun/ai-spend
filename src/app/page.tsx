@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
+import { useChat } from '@ai-sdk/react';
 
 // Simple IndexedDB helpers for persisting chats
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string };
@@ -77,6 +78,24 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>('');
+  const [model, setModel] = useState<string>('openai/gpt-5');
+
+  // Initialize AI chat hook for streaming; tie to selected chat and current model
+  const initialUiMessages = useMemo(() => {
+    const msgs = chats[selectedChatId]?.messages ?? [];
+    return msgs.map((m) => ({
+      id: m.id,
+      role: m.role as any,
+      parts: [{ type: 'text', text: m.content }],
+    }));
+  }, [selectedChatId, chats]);
+
+  const { messages: uiMessages, sendMessage, isLoading, stop } = useChat({
+    id: selectedChatId || 'default',
+    api: '/api/chat',
+    body: { model },
+    initialMessages: initialUiMessages as any,
+  });
 
   useEffect(() => {
     const initializeSdk = async () => {
@@ -313,42 +332,40 @@ export default function Home() {
     }
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = chatInput.trim();
     if (!text || !selectedChatId) return;
-    const currentId = selectedChatId; // capture
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text };
-    setChats((prev) => {
-      const chat = prev[currentId];
-      if (!chat) return prev;
-      const updated: Chat = {
-        ...chat,
-        messages: [...chat.messages, userMsg],
-        updatedAt: Date.now(),
-      };
-      return { ...prev, [currentId]: updated };
-    });
-    setChatInput('');
-    // Demo assistant echo
-    setTimeout(() => {
-      setChats((prev) => {
-        const chat = prev[currentId];
-        if (!chat) return prev;
-        const assistantMsg: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: '✅ Received! (demo reply)',
-        };
-        const updated: Chat = {
-          ...chat,
-          messages: [...chat.messages, assistantMsg],
-          updatedAt: Date.now(),
-        };
-        return { ...prev, [currentId]: updated };
-      });
-    }, 300);
+    try {
+      await sendMessage({ text });
+    } catch (err) {
+      console.error('sendMessage failed', err);
+    } finally {
+      setChatInput('');
+    }
   };
+
+  // Sync streamed UI messages into our local chat store for display/persistence
+  useEffect(() => {
+    if (!selectedChatId) return;
+    if (!uiMessages || uiMessages.length === 0) return;
+    const converted: ChatMessage[] = (uiMessages as any[]).map((m: any, idx: number) => {
+      const parts: any[] = m.parts ?? (m.content ? [{ type: 'text', text: m.content }] : []);
+      let content = '';
+      for (const p of parts) {
+        if (p?.type === 'text' && typeof p.text === 'string') content += p.text;
+        else if (p) content += `\n[${p.type}] ${JSON.stringify(p)}\n`;
+      }
+      const role: 'user' | 'assistant' = m.role === 'user' ? 'user' : 'assistant';
+      return { id: String(m.id ?? `ui-${idx}`), role, content: content.trim() } as ChatMessage;
+    });
+    setChats((prev) => {
+      const chat = prev[selectedChatId];
+      if (!chat) return prev;
+      const updated: Chat = { ...chat, messages: converted, updatedAt: Date.now() };
+      return { ...prev, [selectedChatId]: updated };
+    });
+  }, [uiMessages, selectedChatId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-8">
@@ -508,6 +525,17 @@ export default function Home() {
                 ))}
               </div>
               <form onSubmit={handleSend} className="mt-3 flex gap-2 min-w-0">
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-48 shrink-0 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  aria-label="Select model"
+                  title="Select AI model"
+                >
+                  
+                  <option value="stealth/sonoma-sky-alpha">Stealth Sonoma Sky (alpha)</option>
+                  <option value="stealth/sonoma-dusk-alpha">Stealth Sonoma Dusk (alpha)</option>
+                </select>
                 <input
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
