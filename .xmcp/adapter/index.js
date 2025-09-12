@@ -20,14 +20,14 @@ module.exports = require("../../src/prompts/review-code.ts");
 
 /***/ }),
 
-/***/ "../src/tools/greet.ts":
-/*!*******************************************!*\
-  !*** external "../../src/tools/greet.ts" ***!
-  \*******************************************/
+/***/ "../src/tools/check_balance.ts":
+/*!***************************************************!*\
+  !*** external "../../src/tools/check_balance.ts" ***!
+  \***************************************************/
 /***/ ((module) => {
 
 "use strict";
-module.exports = require("../../src/tools/greet.ts");
+module.exports = require("../../src/tools/check_balance.ts");
 
 /***/ }),
 
@@ -48,7 +48,7 @@ eval("{/* provided dependency */ var INJECTED_TOOLS = __webpack_require__(/*! ./
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
-eval("{__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   prompts: () => (/* binding */ prompts),\n/* harmony export */   tools: () => (/* binding */ tools)\n/* harmony export */ });\n\nconst tools = {\n\"src/tools/greet.ts\": () => Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! ../src/tools/greet.ts */ \"../src/tools/greet.ts\", 23)),\n};\n\nconst prompts = {\n\"src/prompts/review-code.ts\": () => Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! ../src/prompts/review-code.ts */ \"../src/prompts/review-code.ts\", 23)),\n};\n\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi8ueG1jcC9pbXBvcnQtbWFwLmpzIiwibWFwcGluZ3MiOiI7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9OZXh0LmpzIHdpdGggQWRhcHRlci8uLy54bWNwL2ltcG9ydC1tYXAuanM/NjYxMiJdLCJzb3VyY2VzQ29udGVudCI6WyJcbmV4cG9ydCBjb25zdCB0b29scyA9IHtcblwic3JjL3Rvb2xzL2dyZWV0LnRzXCI6ICgpID0+IGltcG9ydChcIi4uL3NyYy90b29scy9ncmVldC50c1wiKSxcbn07XG5cbmV4cG9ydCBjb25zdCBwcm9tcHRzID0ge1xuXCJzcmMvcHJvbXB0cy9yZXZpZXctY29kZS50c1wiOiAoKSA9PiBpbXBvcnQoXCIuLi9zcmMvcHJvbXB0cy9yZXZpZXctY29kZS50c1wiKSxcbn07XG5cblxuIl0sIm5hbWVzIjpbXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./.xmcp/import-map.js\n\n}");
+eval("{__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   prompts: () => (/* binding */ prompts),\n/* harmony export */   tools: () => (/* binding */ tools)\n/* harmony export */ });\n\nconst tools = {\n\"src/tools/check_balance.ts\": () => Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! ../src/tools/check_balance.ts */ \"../src/tools/check_balance.ts\", 23)),\n};\n\nconst prompts = {\n\"src/prompts/review-code.ts\": () => Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! ../src/prompts/review-code.ts */ \"../src/prompts/review-code.ts\", 23)),\n};\n\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi8ueG1jcC9pbXBvcnQtbWFwLmpzIiwibWFwcGluZ3MiOiI7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9OZXh0LmpzIHdpdGggQWRhcHRlci8uLy54bWNwL2ltcG9ydC1tYXAuanM/NjYxMiJdLCJzb3VyY2VzQ29udGVudCI6WyJcbmV4cG9ydCBjb25zdCB0b29scyA9IHtcblwic3JjL3Rvb2xzL2NoZWNrX2JhbGFuY2UudHNcIjogKCkgPT4gaW1wb3J0KFwiLi4vc3JjL3Rvb2xzL2NoZWNrX2JhbGFuY2UudHNcIiksXG59O1xuXG5leHBvcnQgY29uc3QgcHJvbXB0cyA9IHtcblwic3JjL3Byb21wdHMvcmV2aWV3LWNvZGUudHNcIjogKCkgPT4gaW1wb3J0KFwiLi4vc3JjL3Byb21wdHMvcmV2aWV3LWNvZGUudHNcIiksXG59O1xuXG5cbiJdLCJuYW1lcyI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./.xmcp/import-map.js\n\n}");
 
 /***/ }),
 

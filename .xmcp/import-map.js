@@ -1,6 +1,6 @@
 
 export const tools = {
-"src/tools/greet.ts": () => import("../src/tools/greet.ts"),
+"src/tools/check_balance.ts": () => import("../src/tools/check_balance.ts"),
 };
 
 export const prompts = {
